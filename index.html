@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Search with Highlighting</title>
+  <style>
+    .search-input {
+      margin-bottom: 10px;
+      padding: 5px;
+      width: 100%;
+      font-size: 16px;
+    }
+    mark {
+      background-color: yellow;
+    }
+    .post {
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div>
+      <!-- Search Input -->
+      <input
+        type="text"
+        v-model="searchQuery"
+        placeholder="Search..."
+        class="search-input"
+      />
+      
+      <!-- Show the number of posts that contain the search term -->
+      <p>{{ postsFound }} posts were found.</p>
+
+      <!-- Render Posts with highlighted matches -->
+      <div v-for="(post, index) in posts" :key="index" class="post">
+        <h2 v-html="highlightText(post.title)"></h2>
+        <p><em>{{ post.date }}</em></p>
+        <!-- Render each paragraph separately -->
+        <div v-for="(paragraph, pIndex) in splitParagraphs(post.content)" :key="pIndex">
+          <p v-html="highlightText(paragraph)"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/vue@3"></script>
+  <script>
+    const { ref, computed } = Vue;
+
+    const app = Vue.createApp({
+      setup() {
+        const searchQuery = ref('');
+        const posts = ref([
+          {
+            title: 'Understanding the difference between grid-template and grid-auto',
+            date: 'Oct 09, 2018',
+            content: 'With all the new properties related to CSS Grid Layout, one of the distinctions that always confused me was the difference between the grid-template-* and grid-auto-* properties...'
+          },
+          {
+            title: 'Grid Layout: A complete guide',
+            date: 'Nov 12, 2019',
+            content: 'CSS Grid Layout is a two-dimensional layout system for the web. It lets you lay out items in rows and columns, and it has many properties to align and distribute space...'
+          },
+          {
+            title: 'Why CSS Grid is the future of web design',
+            date: 'Jan 15, 2020',
+            content: 'Grid is powerful. Grid is versatile. The ability to create complex layouts with just a few lines of code is a game-changer...'
+          },
+          {
+            title: 'Mastering CSS Grid and Flexbox',
+            date: 'Feb 20, 2021',
+            content: 'Grid or Flexbox? Which one to use and when? While both are powerful layout tools, Grid is particularly useful when you need a two-dimensional layout...'
+          },
+          {
+            title: 'A practical guide to CSS Grid',
+            date: 'Mar 30, 2022',
+            content: 'In this guide, we explore practical use cases for CSS Grid, from simple layouts to complex design systems...'
+          }
+        ]);
+
+        // Function to split content into paragraphs or sentences
+        const splitParagraphs = (content) => {
+          return content.split('. '); // Split content by sentences (or paragraphs if applicable)
+        };
+
+        // Function to highlight the matched search query in the text
+        const highlightText = (text) => {
+          if (!searchQuery.value) return text;
+          const regex = new RegExp(`(${searchQuery.value})`, 'gi');
+          return text.replace(regex, '<mark>$1</mark>');
+        };
+
+        // Computed property to count the number of posts that contain the search term
+        const postsFound = computed(() => {
+          if (!searchQuery.value) return posts.value.length;
+          const query = searchQuery.value.toLowerCase();
+
+          // Count posts where the search term appears in the title or any paragraph of content
+          return posts.value.filter(post => {
+            const inTitle = post.title.toLowerCase().includes(query);
+
+            // Check if search term exists in any of the content's paragraphs
+            const inContent = splitParagraphs(post.content).some(paragraph =>
+              paragraph.toLowerCase().includes(query)
+            );
+
+            return inTitle || inContent;
+          }).length;
+        });
+
+        return {
+          searchQuery,
+          posts,
+          highlightText,
+          postsFound,
+          splitParagraphs,
+        };
+      }
+    });
+
+    app.mount('#app');
+  </script>
+</body>
+</html>
